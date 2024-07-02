@@ -1,0 +1,13 @@
+# Adjust replica and image
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec: 
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:4.4.6
