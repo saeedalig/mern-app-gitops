@@ -5,7 +5,7 @@ namePrefix: staging-
 
 resources:
   - ../../base
-patchesStrategicMerge:
-  - backend-patch.yaml
-  - frontend-patch.yaml
-  - database-patch.yaml
+patches:
+  - path: backend-patch.yaml
+  - path: frontend-patch.yaml
+  - path: database-patch.yaml
