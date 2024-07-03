@@ -113,6 +113,21 @@ The base directory holds configuration which is common to all environments. It i
 - **service.yaml**: Service to enable internal communication.
 - **kustomization.yaml**: Kustomize configuration file for the database resources.
 
+#### kutomization.yaml
+- It is located at root level of base dir inheriting the base configurations.
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - backend
+  - frontend
+  - database
+
+```
+
+
 ### Environments
 The `envs` directory contains environment-specific overlays. We can override the base configurations by patching the custom configurations like replica, image,etc.
 
@@ -122,11 +137,43 @@ The `envs` directory contains environment-specific overlays. We can override the
 - **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the staging environment.
 - **database-patch.yaml**: Specifies the database Docker image and replica to be created for the staging environment.
 
+```yaml
+# kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: staging-
+
+resources:
+  - ../../base
+patchesStrategicMerge:
+  - backend-patch.yaml
+  - frontend-patch.yaml
+  - database-patch.yaml
+
+```
+
 #### prod
 - **kustomization.yaml**: References the base and includes environment-specific patches.
 - **backend-patch.yaml**: Specifies the backend Docker image and replica to be created for the staging environment.
 - **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the staging environment.
 - **database-patch.yaml**: Specifies the database Docker image and replica to be created for the staging environment.
+
+```yaml
+# kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: prod-
+
+resources:
+  - ../../base
+patchesStrategicMerge:
+  - backend-patch.yaml
+  - frontend-patch.yaml
+  - database-patch.yaml
+  
+```
 
 ## ArgoCD Setup
 
