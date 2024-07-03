@@ -2,10 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  labels:
+    role: frontend
+    env: demo
 spec: 
-  replicas: 2
+  replicas: 1
+  selector:
+    matchLabels: 
+      role: frontend
   template:
-    spec:
+    metadata:
+      labels:
+        role: frontend
+    spec: 
       containers:
       - name: frontend
         image: asa96/frontend:latest
