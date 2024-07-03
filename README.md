@@ -2,17 +2,79 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Prerequisites](#prerequisites)
-3. [Repository Structure](#repository-structure)
-4. [Kustomize Configuration](#kustomize-configuration)
-5. [ArgoCD Setup](#argocd-setup)
-6. [Deployment](#deployment)
-7. [Managing Environments](#managing-environments)
-8. [Troubleshooting](#troubleshooting)
+2. [How GitOps Works with Kubernetes](#how-gitops-works-with-kubernetes)
+  - [ArgoCD Operator](#argocd-operator)
+3. [Prerequisites](#prerequisites)
+4. [Repository Structure](#repository-structure)
+5. [Kustomize Configuration](#kustomize-configuration)
+6. [ArgoCD Setup](#argocd-setup)
+7. [Deployment](#deployment)
+8. [Managing Environments](#managing-environments)
+9. [Troubleshooting](#troubleshooting)
 
 
 ## Introduction
 This document provides a step-by-step guide for deploying a MERN (MongoDB, Express, React, Node.js) application to a Kubernetes cluster using ArgoCD and Kustomize following the `GitOps` principles. This setup supports multiple environments such as `staging` and `production`.
+
+## How GitOps Works with Kubernetes
+**Git Repository as the Source of Truth:**
+In GitOps, the desired state of the Kubernetes cluster (e.g., deployments, services, configurations) is stored in a Git repository. This includes manifests, Helm charts, or Kustomize configurations.
+
+**Continuous Reconciliation:**
+A GitOps operator (e.g., ArgoCD, Flux) continuously monitors the Git repository for changes. When a change is detected, the operator reconciles the desired state defined in Git with the actual state of the Kubernetes cluster, applying updates as necessary.
+
+**Automated Rollbacks:**
+GitOps simplifies rollbacks by allowing you to revert to a previous state directly from the Git history. If an issue occurs, you can quickly restore the last known good configuration, enhancing the resilience and stability of the system.
+
+**Declarative Configuration Management:**
+Using declarative configurations, GitOps defines the desired state of the system, making it easier to understand, manage, and reproduce environments. This approach contrasts with imperative commands, providing a more robust and scalable way to manage Kubernetes clusters.
+
+![alt text](https://openkruise.io/assets/images/argocd-9b2263b3527910a6a839509239e3ebbf.jpeg)
+
+### ArgoCD Operator
+ArgoCD operator is a `continuous delivery` tool for Kubernetes, designed to implement `GitOps practices`. Here's high level overview how ArgoCD works:
+
+**Application:**
+An ArgoCD application represents a collection of Kubernetes resources defined in a Git repository. It tracks the desired state (as defined in Git) and ensures the Kubernetes cluster reflects this state.
+
+**Repositories:**
+ArgoCD integrates with Git repositories where Kubernetes manifests, Helm charts, or Kustomize configurations are stored. These repositories act as the source of truth for your applications.
+
+**Sync:**
+The synchronization process involves comparing the desired state in Git with the actual state in the cluster. If there are differences, ArgoCD will reconcile them to ensure the cluster matches the desired state.
+
+### Workflow
+**Defining Applications:**
+Applications are defined in ArgoCD either through its web UI, CLI, or declarative YAML files. These definitions include the source repository, the path within the repository where manifests are stored, and the target cluster/namespace for deployment.
+
+**Continuous Monitoring:**
+ArgoCD continuously monitors the specified Git repositories for changes. When a change is detected (e.g., a new commit to the repository), ArgoCD triggers the synchronization process.
+
+**Sync and Deploy:**
+
+- **Sync:** ArgoCD compares the current state of the cluster with the desired state defined in Git.
+- **Deploy:** If there are differences, ArgoCD applies the necessary changes to the cluster. This can include creating, updating, or deleting resources to match the desired state.
+**Health Checks and Status:**
+ArgoCD performs health checks on resources to ensure they are in a healthy state post-deployment. It provides detailed status information about each resource, including whether it is synced and healthy.
+
+**Rollbacks:**
+If a deployment causes issues, ArgoCD allows for easy rollbacks. By reverting the changes in the Git repository to a previous state, ArgoCD will sync the cluster back to this stable state.
+
+### Features
+**Declarative GitOps:**
+ArgoCD embraces a declarative approach, where the desired state is defined in Git, and the actual state is continuously reconciled to match this state.
+
+**Multi-Cluster Support:**
+ArgoCD can manage multiple Kubernetes clusters from a single ArgoCD instance, making it suitable for complex environments with multiple regions or stages.
+
+**RBAC and Multi-Tenancy:**
+ArgoCD provides role-based access control (RBAC) and supports multi-tenancy, enabling secure and organized management of different teams and applications.
+
+**User Interface and CLI:**
+ArgoCD offers a web UI and a CLI for managing applications, visualizing the state of resources, and performing operations like syncing and rolling back.
+
+**Integrations:**
+ArgoCD integrates with various CI/CD tools and services, including Jenkins, GitHub Actions, and more, facilitating a seamless continuous delivery pipeline.
 
 ## Prerequisites
 - A `Kubernetes cluster`.
@@ -23,7 +85,8 @@ This document provides a step-by-step guide for deploying a MERN (MongoDB, Expre
 - A `Docker Hub` account (or other container registry) for storing Docker images.
 
 ## Repository Structure
-Here is the structure of the repository used for deploying the MERN app:
+Here is the structure of the repository used for deploying the MERN app. I've maintained two separate git repositories for ensuring the best GitOps practices. This repo only contains the configuratins related to Kubernetes and ArgoCD.
+
 ![alt text](pics/arch.png)
 
 
@@ -69,7 +132,7 @@ The `envs` directory contains environment-specific overlays. We can override the
 ## ArgoCD Setup
 
 ### ArgoCD Application Manifest
-Since I'm deploying the applicatin in `staging` and `prod` envs, i also created the respective application definitions located at `argocd-apps/` directort with name `staging-app.yaml` and `prod-app.yaml`.
+Since I'm deploying the applicatin in `staging` and `prod` envs, I also created the respective application definitions located at `argocd-apps/` directort with name `staging-app.yaml` and `prod-app.yaml`.
 
 **staging-app.yaml:**
 
@@ -122,7 +185,7 @@ spec:
     - CreateNamespace=true
 ```
 
-Apply the applocation manifests.
+Apply the application manifests.
 ```
 kubectl apply -f argocd/staging-app.yaml
 kubectl apply -f argocd/prod-app.yaml
