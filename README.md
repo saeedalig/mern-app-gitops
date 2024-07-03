@@ -7,7 +7,7 @@
 4. [Repository Structure](#repository-structure)
 5. [Kustomize Configuration](#kustomize-configuration)
 6. [ArgoCD Setup](#argocd-setup)
-7. [Deployment](#deployment)
+7. [Deployment and Promotion](#deployment-and-promotion)
 8. [Managing Environments](#managing-environments)
 9. [Troubleshooting](#troubleshooting)
 
@@ -196,8 +196,13 @@ kubectl get applications -n staging
 kubectl get applications -n prod
 ```
 
-## Deployment
+## Deployment and Promotion
 Once the ArgoCD application definition is applied, ArgoCD will automatically monitor the specified `Git repository` for changes. Any updates to the Kustomize configurations or Docker image versions in the repository will be automatically synced to the Kubernetes cluster.
+
+Firstly application needs to be deployed in staging environment. Once verified and test properly, it would get promoted to prod environment manually.
+  - Manual promotion provides greater `control` over the deployment process. It allows teams to choose the `right time` for deployment, minimizing disruptions to users.
+
+  - Manual promotion allows for better `coordination and communication with stakeholders`. Important updates can be communicated in advance, ensuring that all relevant parties are informed and prepared for the changes.
 
 You can also apply the manifests in specific env by running the following command
 ```
