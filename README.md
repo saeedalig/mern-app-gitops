@@ -9,7 +9,7 @@
 6. [ArgoCD Setup](#argocd-setup)
 7. [Deployment and Promotion](#deployment-and-promotion)
 8. [Managing Environments](#managing-environments)
-9. [Cert-Manager and Let's Encrypt](#cert-manager-and-let's-encrypt)
+9. [Cert-Manager and Let's Encrypt](#cert-manager-and-lets-encrypt)
 10. [Troubleshooting](#troubleshooting)
 
 
