@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mern-app
+  name: prod-mern-app
   namespace: argocd
 spec:
   project: default
