@@ -3,7 +3,6 @@
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [How GitOps Works with Kubernetes](#how-gitops-works-with-kubernetes)
-  - [ArgoCD Operator](#argocd-operator)
 3. [Prerequisites](#prerequisites)
 4. [Repository Structure](#repository-structure)
 5. [Kustomize Configuration](#kustomize-configuration)
