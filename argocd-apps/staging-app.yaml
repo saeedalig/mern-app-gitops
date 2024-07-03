@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/asa-96/mern-app-gitops.git'
+    repoURL: 'https://github.com/saeedalig/mern-app-gitops.git'
     targetRevision: HEAD
     path: envs/staging
   destination:

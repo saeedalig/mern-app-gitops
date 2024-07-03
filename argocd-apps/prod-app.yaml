@@ -6,12 +6,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/asa-96/mern-app-gitops.git'
+    repoURL: 'https://github.com/saeedalig/mern-app-gitops.git'
     targetRevision: HEAD
     path: envs/prod
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: staging
+    namespace: prod
   syncPolicy:
     automated:
       prune: true
