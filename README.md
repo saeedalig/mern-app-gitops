@@ -9,7 +9,8 @@
 6. [ArgoCD Setup](#argocd-setup)
 7. [Deployment and Promotion](#deployment-and-promotion)
 8. [Managing Environments](#managing-environments)
-9. [Troubleshooting](#troubleshooting)
+9. [Cert-Manager and Let's Encrypt](#cert-manager-and-let)
+10. [Troubleshooting](#troubleshooting)
 
 
 ## Introduction
@@ -269,6 +270,113 @@ Access the Application on port 3000
 ![alt text](pics/app.png)
 
 
+## Cert-Manager and Let's Encrypt
+`Let's Encrypt` is a free, automated, and open Certificate Authority (CA) that provides SSL/TLS certificates to enable HTTPS on websites and secure communication over the internet.
+
+By leveraging `Cert-Manager`, a Kubernetes native solution, the process of obtaining and renewing certificates from Let's Encrypt becomes seamless and efficient. Cert-Manager automates the certificate lifecycle management, handling tasks such as domain validation and certificate renewal, thereby minimizing manual effort and reducing the risk of certificate expiration. 
+
+### Guide to setup
+
+**Step 1: Install Cert-Manager**
+First, install Cert-Manager in your Kubernetes cluster.
+```bash
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+```
+Verify
+```bash
+kubectl get pods --namespace cert-manager
+```
+
+**Step 2: Create a ClusterIssuer for Let's Encrypt**
+Create a ClusterIssuer resource to define how Cert-Manager should obtain certificates from Let's Encrypt. Choose between the staging environment (for testing) and the production environment (for live use).
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+```
+Apply the ClusterIssuee
+```bash
+kubectl apply -f clusterissuer.yaml
+```
+
+**Step 3: Create a Certificate Resource**
+Create a Certificate resource for your domain. This resource requests a certificate from Let's Encrypt using the ClusterIssuer you just created.
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mern-app
+  namespace: staging
+spec:
+  secretName: mern-app-certificate-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: mern.klouds.site
+  dnsNames:
+  - mern.klouds.site
+```
+
+Apply the certificate
+```bash
+kubectl apply -f certificate.yaml
+```
+
+**Step 4: Create or Update Ingress to Use the Certificate**
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: your-ingress
+  namespace: three-tier
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - mern.klouds.site
+    secretName: mern-app-certificate-tls
+  rules:
+  - host: mern.klouds.site
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 3000
+```
+
+Apply the updated Ingress resource:
+
+```bash
+kubectl apply -f ingress.yaml
+```
+**Step 5: Verify the Setup**
+Check the status of the certificate issuance by inspecting the Certificate resource:
+
+```bash
+kubectl describe certificate your-certificate -n staging
+```
+You should see the certificate details and status. Also, verify that your domain now has a valid HTTPS certificate issued by Let's Encrypt.
+
 ## Managing Environments
 To manage different environments, modify the `kustomization.yaml` and other respective configuration files under the respective environment directories.
 
@@ -279,3 +387,4 @@ If you encounter issues, check the following:
 - ArgoCD application status from UI or using ArgoCD CLI.
 - Kubernetes pod logs.
 - Kustomize build output.
+
