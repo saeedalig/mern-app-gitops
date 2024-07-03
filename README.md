@@ -13,7 +13,7 @@
 
 
 ## Introduction
-This document provides a step-by-step guide for deploying a MERN (MongoDB, Express, React, Node.js) application to a Kubernetes cluster using ArgoCD and Kustomize following the `GitOps` principles. This setup supports multiple environments such as `staging` and `production`.
+This document provides a step-by-step guide for deploying a MERN (MongoDB, Express, React, Node.js) application to a Kubernetes cluster using ArgoCD and Kustomize following the `GitOps` principles. This setup supports multiple environments such as `prod` and `production`.
 
 ## How GitOps Works with Kubernetes
 **Git Repository as the Source of Truth:**
@@ -131,93 +131,68 @@ resources:
 ### Environments
 The `envs` directory contains environment-specific overlays. We can override the base configurations by patching the custom configurations like replica, image,etc.
 
-#### staging
+#### prod
 - **kustomization.yaml**: References the base and includes environment-specific patches.
-- **backend-patch.yaml**: Specifies the backend Docker image and replica to be created for the staging environment.
-- **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the staging environment.
-- **database-patch.yaml**: Specifies the database Docker image and replica to be created for the staging environment.
+- **backend-patch.yaml**: Specifies the backend Docker image and replica to be created for the prod environment.
+- **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the prod environment.
+- **database-patch.yaml**: Specifies the database Docker image and replica to be created for the prod environment.
 
 ```yaml
 # kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namePrefix: staging-
+namespace: prod
 
 resources:
   - ../../base
-patchesStrategicMerge:
-  - backend-patch.yaml
-  - frontend-patch.yaml
-  - database-patch.yaml
+patches:
+  - path: backend-patch.yaml
+  - path: frontend-patch.yaml
+  - path: database-patch.yaml
 
 ```
 
 #### prod
 - **kustomization.yaml**: References the base and includes environment-specific patches.
-- **backend-patch.yaml**: Specifies the backend Docker image and replica to be created for the staging environment.
-- **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the staging environment.
-- **database-patch.yaml**: Specifies the database Docker image and replica to be created for the staging environment.
+- **backend-patch.yaml**: Specifies the backend Docker image and replica to be created for the prod environment.
+- **frontend-patch.yaml**: Specifies the frontend Docker image and replica to be created for the prod environment.
+- **database-patch.yaml**: Specifies the database Docker image and replica to be created for the prod environment.
 
 ```yaml
 # kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namePrefix: prod-
+namespace: prod
 
 resources:
   - ../../base
-patchesStrategicMerge:
-  - backend-patch.yaml
-  - frontend-patch.yaml
-  - database-patch.yaml
+patches:
+  - path: backend-patch.yaml
+  - path: frontend-patch.yaml
+  - path: database-patch.yaml
   
 ```
 
 ## ArgoCD Setup
 
 ### ArgoCD Application Manifest
-Since I'm deploying the applicatin in `staging` and `prod` envs, I also created the respective application definitions located at `argocd-apps/` directort with name `staging-app.yaml` and `prod-app.yaml`.
-
-**staging-app.yaml:**
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: mern-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: 'https://github.com/asa-96/mern-app-gitops.git'
-    targetRevision: HEAD
-    path: envs/staging
-  destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: staging
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-  syncOptions:    
-    - CreateNamespace=true
-```
+Since I'm deploying the applicatin in `prod` and `prod` envs, I also created the respective application definitions located at `argocd-apps/` directort with name `prod-app.yaml` and `prod-app.yaml`.
 
 **prod-app.yaml:**
 
 ```yaml
-# prod-app.yaml`
+--- 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mern-app
+  name: prod-mern-app
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/asa-96/mern-app-gitops.git'
+    repoURL: 'https://github.com/saeedalig/mern-app-gitops.git'
     targetRevision: HEAD
     path: envs/prod
   destination:
@@ -227,35 +202,72 @@ spec:
     automated:
       prune: true
       selfHeal: true
-  syncOptions:    
-    - CreateNamespace=true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+```
+
+**prod-app.yaml:**
+
+```yaml
+# prod-app.yaml`
+--- 
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-mern-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/saeedalig/mern-app-gitops.git'
+    targetRevision: HEAD
+    path: envs/prod
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+
 ```
 
 Apply the application manifests.
 ```
-kubectl apply -f argocd/staging-app.yaml
 kubectl apply -f argocd/prod-app.yaml
-```
+kubectl apply -f argocd/prod-app.yaml
 
-Verify the application.
 ```
-kubectl get applications -n staging
-kubectl get applications -n prod
+![alt text](pics/argocd.png)
+
+Verify the resources in staging env.
 ```
+kubectl get all -n staging
+```
+![alt text](pics/kubectl.png)
 
 ## Deployment and Promotion
 Once the ArgoCD application definition is applied, ArgoCD will automatically monitor the specified `Git repository` for changes. Any updates to the Kustomize configurations or Docker image versions in the repository will be automatically synced to the Kubernetes cluster.
 
-Firstly application needs to be deployed in staging environment. Once verified and test properly, it would get promoted to prod environment manually.
+Firstly application needs to be deployed in prod environment. Once verified and test properly, it would get promoted to prod environment manually.
   - Manual promotion provides greater `control` over the deployment process. It allows teams to choose the `right time` for deployment, minimizing disruptions to users.
 
   - Manual promotion allows for better `coordination and communication with stakeholders`. Important updates can be communicated in advance, ensuring that all relevant parties are informed and prepared for the changes.
 
 You can also apply the manifests in specific env by running the following command
 ```
-kubectl apply -k kustomize/envs/staging
+kubectl apply -k kustomize/envs/prod
 kubectl apply -k kustomize/envs/prod
 ```
+
+Access the Application on port 3000
+
+![alt text](pics/app.png)
+
 
 ## Managing Environments
 To manage different environments, modify the `kustomization.yaml` and other respective configuration files under the respective environment directories.
