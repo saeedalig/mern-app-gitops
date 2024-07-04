@@ -298,7 +298,7 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: your-email@example.com
+    email: your-email@example.com # put your email
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
@@ -342,19 +342,28 @@ kubectl apply -f certificate.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: your-ingress
-  namespace: three-tier
+  name: mern-ingress
+  namespace: staging
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   tls:
   - hosts:
     - mern.klouds.site
     secretName: mern-app-certificate-tls
+  ingressClassName: nginx
   rules:
   - host: mern.klouds.site
     http:
       paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 3500
       - path: /
         pathType: Prefix
         backend:
@@ -376,6 +385,10 @@ Check the status of the certificate issuance by inspecting the Certificate resou
 kubectl describe certificate your-certificate -n staging
 ```
 You should see the certificate details and status. Also, verify that your domain now has a valid HTTPS certificate issued by Let's Encrypt.
+
+Finally, browse the application with **https://mern.klouds.site**  
+
+![alt text](pics/https.png)
 
 ## Managing Environments
 To manage different environments, modify the `kustomization.yaml` and other respective configuration files under the respective environment directories.
